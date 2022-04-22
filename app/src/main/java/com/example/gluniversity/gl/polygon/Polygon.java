@@ -8,35 +8,53 @@ import com.example.gluniversity.gl.ESGLUtils;
 
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
+import java.nio.IntBuffer;
 
 public abstract class Polygon {
     private final static String TAG ="Polygon";
+    protected final static int VERTEXT_DIMENSION = 2;
+    protected final static int COLOR_DIMENSION = 4;
+
+    public final static int NAIVE = 1;
+    public final static int VBO = 2;//顶点缓冲对象
+    public final static int VAO = 3;//顶点数组对象
+    public final static int MAP = 4;
     protected String vertexShaderCode =
-                    "attribute vec4 vPosition;" +
-                    "void main() {" +
-                    "  gl_Position = vPosition;" +
-                    "}";
+                    "#version 300 es \n"+
+                    "layout(location = 0)in vec4 vPosition;\n" +  //写成out就报1281错误了
+                    "layout(location = 1)in vec4 vColor;\n"+
+                    "out vec4 tColor;\n"+
+//                            "out vec4 gl_Position;\n"+
+                    "void main() {\n" +
+                    "tColor = vColor;\n"+
+                    "  gl_Position = vPosition;\n" +
+                    "}\n";
     protected String fragmentShaderCode =
-                    "precision mediump float;" +
-                    "uniform vec4 vColor;" +
-                    "void main() {" +
-                    "  gl_FragColor = vColor;" +
-                    "}";
+                    "#version 300 es \n"+
+                    "precision mediump float;\n" +
+                    "in vec4 tColor;\n" +
+                    "out vec4 fragColor;\n"+
+                    "void main() {\n" +
+                    "  fragColor = tColor;\n" +
+                    "}\n";
     protected FloatBuffer vertexBuff;
-    protected ByteBuffer drawOrderBuff;
+    protected FloatBuffer colorBuff;
+    protected ByteBuffer drawIndicesBuff;
     int program = 0;
+    protected int bufferIds[] = {0,0};
 
     Polygon(){
 
     }
 
-    void initGL(){
+    public void initGL(){
         program = GLES30.glCreateProgram();
         int vertextShader = ESGLUtils.loadShader(vertexShaderCode,GLES30.GL_VERTEX_SHADER);
         int fragmentShader = ESGLUtils.loadShader(fragmentShaderCode,GLES30.GL_FRAGMENT_SHADER);
         GLES30.glAttachShader(program,vertextShader);
         GLES30.glAttachShader(program,fragmentShader);
         GLES30.glLinkProgram(program);
+
         int[] linkResult = new int[]{0};
         GLES30.glGetProgramiv(program,GLES30.GL_LINK_STATUS,linkResult,0);
         if (linkResult[0] == 0){
@@ -47,9 +65,11 @@ public abstract class Polygon {
             }
             return;
         }
-        GLES30.glClearColor(200,0,0,255);
+        GLES30.glClearColor(0.2f,0.2f,0.2f, 1.0f);
 
     }
-
-    protected abstract void draw();
+    public void onViewportChange(int width ,int height){
+        GLES30.glViewport(0,0,width,height);
+    }
+    public abstract void draw(int  drawTech);
 }
