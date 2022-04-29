@@ -1,4 +1,4 @@
-package com.example.gluniversity.gl.polygon;
+package com.example.gluniversity.gl.animator;
 
 import android.opengl.GLES20;
 import android.opengl.GLES30;
@@ -8,42 +8,53 @@ import com.example.gluniversity.gl.ESGLUtils;
 
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
-import java.nio.IntBuffer;
 
-public abstract class Polygon {
-    private final static String TAG ="Polygon";
-    protected final static int VERTEX_DIMENSION = 2;
+public abstract class Animator {
+    private final static String TAG = "Animator";
+    protected final static int VERTEX_DIMENSION = 3;
     protected final static int COLOR_DIMENSION = 4;
 
-    public final static int NAIVE = 1;
-    public final static int VBO = 2;//顶点缓冲对象
-    public final static int VAO = 3;//顶点数组对象
-    public final static int MAP = 4;
+    public final static int ROTATE_X = 0 ;
+    public final static int ROTATE_Y = 1 ;
+    public final static int ROTATE_Z = 2 ;
+
     protected String vertexShaderCode =
-                    "#version 300 es \n"+
+            "#version 300 es \n"+
                     "layout(location = 0)in vec4 vPosition;\n" +  //写成out就报1281错误了
                     "layout(location = 1)in vec4 vColor;\n"+
                     "out vec4 tColor;\n"+
-//                            "out vec4 gl_Position;\n"+
+                    "uniform mat4 mvpMatrix;\n"+
+                    "uniform lowp int isDrawCoor;\n"+
+                    "layout(location =2)in vec3 a_normal;\n"+
                     "void main() {\n" +
-                    "tColor = vColor;\n"+
-                    "  gl_Position = vPosition;\n" +
+                    "if(isDrawCoor == 1){\n"+
+                        "tColor = vColor;\n"+
+                        " gl_Position = vPosition;}\n" +
+                    "else{\n"+
+                        "v_normal =  a_normal;\n" +
+                        "gl_Position = mvpMatrix*vPosition;}\n" +
                     "}\n";
     protected String fragmentShaderCode =
-                    "#version 300 es \n"+
-                    "precision mediump float;\n" +
+            "#version 300 es \n"+
+                    "precision lowp float;\n" +
                     "in vec4 tColor;\n" +
+                    "uniform lowp int isDrawCoor;\n"+
                     "out vec4 fragColor;\n"+
+                    "in vec3 v_normal;\n"+
+                    "uniform samplerCube sampler;\n" +
                     "void main() {\n" +
-                    "  fragColor = tColor;\n" +
+                    "if(isDrawCoor == 1){\n"+
+                        "fragColor = tColor;}\n" +
+                    "else{\n"+
+                        "fragColor = texture(sampler,v_normal);}\n" +
                     "}\n";
     protected FloatBuffer vertexBuff;
     protected FloatBuffer colorBuff;
     protected ByteBuffer drawIndicesBuff;
     int program = 0;
-    protected int bufferIds[] = {0,0};
+    protected int[] bufferIds = new int[]{0,0,0};
 
-    Polygon(){
+    Animator(){
 
     }
 

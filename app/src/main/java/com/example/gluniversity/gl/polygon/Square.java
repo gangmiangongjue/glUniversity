@@ -11,7 +11,7 @@ import java.nio.FloatBuffer;
 
 public class Square extends Polygon {
     private final static String TAG = "Square";
-    int[] vertextBufferArrayID = new int[]{0};
+    int[] VERTEXBufferArrayID = new int[]{0};
     public Square(){
         float[] vertex = new float[]{
                 -0.5f,0.5f,
@@ -56,9 +56,9 @@ public class Square extends Polygon {
                 GLES30.glEnableVertexAttribArray(positionHandle);
                 GLES30.glEnableVertexAttribArray(colorHandle);
                 vertexBuff.position(0);//这里position必须设置
-                GLES30.glVertexAttribPointer(positionHandle,VERTEXT_DIMENSION,GLES30.GL_FLOAT,false,(VERTEXT_DIMENSION+COLOR_DIMENSION)*4,vertexBuff);//无buffer版本
-                vertexBuff.position(VERTEXT_DIMENSION*4);//这里position没有毛用，所以最好还是把buffer分开存储
-                GLES30.glVertexAttribPointer(colorHandle,COLOR_DIMENSION,GLES30.GL_FLOAT,false,(VERTEXT_DIMENSION+COLOR_DIMENSION)*4,vertexBuff);
+                GLES30.glVertexAttribPointer(positionHandle,VERTEX_DIMENSION,GLES30.GL_FLOAT,false,(VERTEX_DIMENSION+COLOR_DIMENSION)*4,vertexBuff);//无buffer版本
+                vertexBuff.position(VERTEX_DIMENSION*4);//这里position没有毛用，所以最好还是把buffer分开存储
+                GLES30.glVertexAttribPointer(colorHandle,COLOR_DIMENSION,GLES30.GL_FLOAT,false,(VERTEX_DIMENSION+COLOR_DIMENSION)*4,vertexBuff);
                 GLES30.glDrawArrays(GLES30.GL_TRIANGLE_STRIP,0,4);
                 GLES30.glDisableVertexAttribArray(positionHandle);
                 GLES30.glDisableVertexAttribArray(colorHandle);
@@ -77,9 +77,8 @@ public class Square extends Polygon {
                     GLES30.glBufferData(GLES30.GL_ARRAY_BUFFER,vertexBuff.capacity()*4,vertexBuff,GLES30.GL_STATIC_DRAW);
                     GLES30.glBufferData(GLES30.GL_ELEMENT_ARRAY_BUFFER,drawIndicesBuff.capacity(),drawIndicesBuff,GLES30.GL_STATIC_DRAW);
 
-                    GLES30.glVertexAttribPointer(positionHandle,VERTEXT_DIMENSION,GLES30.GL_FLOAT,false,(VERTEXT_DIMENSION+COLOR_DIMENSION)*4,0);//有buffer版本
-                    GLES30.glVertexAttribPointer(colorHandle,COLOR_DIMENSION,GLES30.GL_FLOAT,false,(VERTEXT_DIMENSION+COLOR_DIMENSION)*4,VERTEXT_DIMENSION*4);
-
+                    GLES30.glVertexAttribPointer(positionHandle,VERTEX_DIMENSION,GLES30.GL_FLOAT,false,(VERTEX_DIMENSION+COLOR_DIMENSION)*4,0);//有buffer版本
+                    GLES30.glVertexAttribPointer(colorHandle,COLOR_DIMENSION,GLES30.GL_FLOAT,false,(VERTEX_DIMENSION+COLOR_DIMENSION)*4,VERTEX_DIMENSION*4);
                 }
                 GLES30.glDrawElements(GLES30.GL_TRIANGLES,drawIndicesBuff.capacity(),GLES30.GL_UNSIGNED_BYTE,0);
                 GLES30.glDisableVertexAttribArray(positionHandle);
@@ -92,9 +91,9 @@ public class Square extends Polygon {
                     vertexBuff.position(0);//这里必须传入正确的位置，gles的jni会检查buffer位置
 
                     GLES30.glGenBuffers(bufferIds.length,bufferIds,0);
-                    GLES30.glGenVertexArrays(1,vertextBufferArrayID,0);//VAO
-                    Log.d(TAG, "draw new vertext array id: " + vertextBufferArrayID[0]);
-                    GLES30.glBindVertexArray(vertextBufferArrayID[0]);
+                    GLES30.glGenVertexArrays(1,VERTEXBufferArrayID,0);//VAO
+                    Log.d(TAG, "draw new VERTEX array id: " + VERTEXBufferArrayID[0]);
+                    GLES30.glBindVertexArray(VERTEXBufferArrayID[0]);
 
                     GLES30.glBindBuffer(GLES30.GL_ARRAY_BUFFER,bufferIds[0]);//必须在glBindVertexArray之后
                     GLES30.glBindBuffer(GLES30.GL_ELEMENT_ARRAY_BUFFER,bufferIds[1]);//VBO
@@ -103,14 +102,14 @@ public class Square extends Polygon {
 
                     GLES30.glEnableVertexAttribArray(positionHandle);//必须在glBindVertexArray之后
                     GLES30.glEnableVertexAttribArray(colorHandle);
-                    GLES30.glVertexAttribPointer(positionHandle,VERTEXT_DIMENSION,GLES30.GL_FLOAT,false,(VERTEXT_DIMENSION+COLOR_DIMENSION)*4,0);
-                    GLES30.glVertexAttribPointer(colorHandle,COLOR_DIMENSION,GLES30.GL_FLOAT,false,(VERTEXT_DIMENSION+COLOR_DIMENSION)*4,VERTEXT_DIMENSION*4);
+                    GLES30.glVertexAttribPointer(positionHandle,VERTEX_DIMENSION,GLES30.GL_FLOAT,false,(VERTEX_DIMENSION+COLOR_DIMENSION)*4,0);
+                    GLES30.glVertexAttribPointer(colorHandle,COLOR_DIMENSION,GLES30.GL_FLOAT,false,(VERTEX_DIMENSION+COLOR_DIMENSION)*4,VERTEX_DIMENSION*4);
                     GLES30.glBindVertexArray(0);
                     GLES30.glDisableVertexAttribArray(positionHandle);
                     GLES30.glDisableVertexAttribArray(colorHandle);
                 }
 
-                GLES30.glBindVertexArray(vertextBufferArrayID[0]);
+                GLES30.glBindVertexArray(VERTEXBufferArrayID[0]);
                 GLES30.glDrawElements(GLES30.GL_TRIANGLES,drawIndicesBuff.capacity(),GLES30.GL_UNSIGNED_BYTE,0);
                 GLES30.glBindVertexArray(0);
                 GLES30.glBindBuffer(GLES30.GL_ARRAY_BUFFER,0);
@@ -149,8 +148,8 @@ public class Square extends Polygon {
                     }
 
                     Log.d(TAG, "draw buffer type: "+vertexMapBuffer.getClass().getSimpleName());
-                    GLES30.glVertexAttribPointer(positionHandle,VERTEXT_DIMENSION,GLES30.GL_FLOAT,false,(VERTEXT_DIMENSION+COLOR_DIMENSION)*4,0);//有buffer版本
-                    GLES30.glVertexAttribPointer(colorHandle,COLOR_DIMENSION,GLES30.GL_FLOAT,false,(VERTEXT_DIMENSION+COLOR_DIMENSION)*4,VERTEXT_DIMENSION*4);
+                    GLES30.glVertexAttribPointer(positionHandle,VERTEX_DIMENSION,GLES30.GL_FLOAT,false,(VERTEX_DIMENSION+COLOR_DIMENSION)*4,0);//有buffer版本
+                    GLES30.glVertexAttribPointer(colorHandle,COLOR_DIMENSION,GLES30.GL_FLOAT,false,(VERTEX_DIMENSION+COLOR_DIMENSION)*4,VERTEX_DIMENSION*4);
 
                 }
                 GLES30.glDrawElements(GLES30.GL_TRIANGLES,drawIndicesBuff.capacity(),GLES30.GL_UNSIGNED_BYTE,0);

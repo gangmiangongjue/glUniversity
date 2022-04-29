@@ -72,9 +72,9 @@ public class Triangle extends Polygon {
 //            Log.d(TAG, "draw error2: " + GLES30.glGetError());
             GLES30.glBindBuffer(GLES30.GL_ELEMENT_ARRAY_BUFFER,bufferIds[1]);
 
-            GLES30.glVertexAttribPointer(positionHandle,2,GLES30.GL_FLOAT,false,(VERTEXT_DIMENSION+COLOR_DIMENSION) * 4,0);
+            GLES30.glVertexAttribPointer(positionHandle,2,GLES30.GL_FLOAT,false,(VERTEX_DIMENSION+COLOR_DIMENSION) * 4,0);
 
-            GLES30.glVertexAttribPointer(colorHandle,4,GLES30.GL_FLOAT,false,(VERTEXT_DIMENSION+COLOR_DIMENSION) * 4,VERTEXT_DIMENSION*4);
+            GLES30.glVertexAttribPointer(colorHandle,4,GLES30.GL_FLOAT,false,(VERTEX_DIMENSION+COLOR_DIMENSION) * 4,VERTEX_DIMENSION*4);
 
 //            drawIndicesBuff.position(0);
             GLES30.glDrawElements(GLES30.GL_TRIANGLES,3,GLES30.GL_UNSIGNED_BYTE,0);
@@ -84,9 +84,9 @@ public class Triangle extends Polygon {
 
         }else {
             vertexBuff.position(0);//重要！！！
-            GLES30.glVertexAttribPointer(positionHandle, VERTEXT_DIMENSION, GLES30.GL_FLOAT, false, (VERTEXT_DIMENSION+COLOR_DIMENSION) * 4, vertexBuff);//size是数据的宽，stride为0时候数据是pack好的，而且总是以
-            vertexBuff.position(VERTEXT_DIMENSION*4);//没有卵用，这里的position native不认，造成颜色有误差，可以把颜色和顶点分开解决
-            GLES30.glVertexAttribPointer(colorHandle, COLOR_DIMENSION, GLES30.GL_FLOAT, false,(VERTEXT_DIMENSION+COLOR_DIMENSION) * 4,vertexBuff);
+            GLES30.glVertexAttribPointer(positionHandle, VERTEX_DIMENSION, GLES30.GL_FLOAT, false, (VERTEX_DIMENSION+COLOR_DIMENSION) * 4, vertexBuff);//size是数据的宽，stride为0时候数据是pack好的，而且总是以
+            vertexBuff.position(VERTEX_DIMENSION*4);//没有卵用，这里的position native不认，造成颜色有误差，可以把颜色和顶点分开解决
+            GLES30.glVertexAttribPointer(colorHandle, COLOR_DIMENSION, GLES30.GL_FLOAT, false,(VERTEX_DIMENSION+COLOR_DIMENSION) * 4,vertexBuff);
             GLES30.glDrawArrays(GLES30.GL_TRIANGLES, 0, 3);//first 和count按数组理解就好了
         }
         GLES30.glDisableVertexAttribArray(positionHandle);//默认状态，如果赋常量值，则在disable状态即可。
