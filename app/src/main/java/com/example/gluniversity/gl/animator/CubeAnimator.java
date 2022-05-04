@@ -1,12 +1,15 @@
 package com.example.gluniversity.gl.animator;
 
 import android.content.Context;
+import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.opengl.GLES20;
 import android.opengl.GLES30;
 import android.opengl.Matrix;
 import android.util.Log;
 
+import com.example.gluniversity.BitmapUtils;
 import com.example.gluniversity.R;
 
 import java.nio.ByteBuffer;
@@ -24,7 +27,12 @@ public class CubeAnimator extends Animator {
 
     private FloatBuffer vertexBuffLine;
 
+    private int cubeTexId= 0;
+
+    private Context context;
+
     public CubeAnimator(Context context) {
+        this.context = context;
         float[] vertex = new float[]{//x,y,z,w
                 0.0f, 0.5f, 0.25f,
                 -1.0f, 1.0f, 1.0f,
@@ -71,8 +79,10 @@ public class CubeAnimator extends Animator {
         drawIndicesBuff = ByteBuffer.allocateDirect(drawIndices.length).order(ByteOrder.nativeOrder());
         drawIndicesBuff.put(drawIndices).position(0);
 
-        BitmapDrawable n1 = (BitmapDrawable) context.getResources().getDrawable(R.drawable.n1);
-        n1.getBitmap().
+        cubeTexId = genCubeTexture();
+        Log.d(TAG, "CubeAnimator cubeTexId: " +cubeTexId);
+
+
     }
 
     float[] matrix = new float[]{//默认规则是列优先
@@ -128,6 +138,7 @@ public class CubeAnimator extends Animator {
             GLES30.glBindBuffer(GLES30.GL_ELEMENT_ARRAY_BUFFER, bufferIds[1]);
             GLES30.glBufferData(GLES30.GL_ELEMENT_ARRAY_BUFFER, drawIndicesBuff.capacity(), drawIndicesBuff, GLES30.GL_STATIC_DRAW);
 
+
             GLES30.glGenVertexArrays(1,VERTEXBufferArrayID,0);
             GLES30.glBindVertexArray(VERTEXBufferArrayID[0]);
 
@@ -176,14 +187,33 @@ public class CubeAnimator extends Animator {
                 matrix[5] = cos;
                 break;
         }
-        GLES30.glUniform1ui(matrixLocation,1);
-        GLES30.glBindVertexArray(VERTEXBufferArrayID[0]);
-        GLES30.glLineWidth(5);
-        GLES30.glDrawArrays(GLES30.GL_LINES,0,4);
 
-        GLES30.glUniform1ui(matrixLocation,0);
+        GLES30.glUniform1i(drawLocation,1);
+        Log.d(TAG, "draw0.8: " + GLES30.glGetError());
+        GLES30.glBindVertexArray(VERTEXBufferArrayID[0]);
+        Log.d(TAG, "draw0.81: " + GLES30.glGetError());
+        GLES30.glLineWidth(5);
+        Log.d(TAG, "draw0.82: " + GLES30.glGetError());
+        GLES30.glDrawArrays(GLES30.GL_LINES,0,4);
+        Log.d(TAG, "draw0.9: " + GLES30.glGetError());
+        GLES30.glUniform1i(drawLocation,0);
         Matrix.multiplyMM(mvpMatrix,0,matrix,0,matrix_tran,0);//右侧的最先实行变换，因为离点近嘛
+        Log.d(TAG, "draw1.0: " + GLES30.glGetError());
         GLES30.glBindVertexArray(0);
+        Log.d(TAG, "draw1.1: " + GLES30.glGetError());
+        int samplerLocation = GLES30.glGetUniformLocation(program,"sampler");
+        Log.d(TAG, "draw1.2: " + GLES30.glGetError());
+        if (samplerLocation == -1) {
+            Log.d(TAG, "draw : get matrixLocation error");
+            return;
+        }
+        GLES30.glActiveTexture(GLES30.GL_TEXTURE0);
+        Log.d(TAG, "draw2: " + GLES30.glGetError());
+        GLES30.glBindTexture(GLES30.GL_TEXTURE_CUBE_MAP,cubeTexId);
+        Log.d(TAG, "draw22: " + GLES30.glGetError());
+        GLES30.glUniform1i(samplerLocation,0);
+        Log.d(TAG, "draw222: " + GLES30.glGetError());
+
         GLES30.glUniformMatrix4fv(matrixLocation, 1, false, mvpMatrix, 0);
         GLES30.glDrawElements(GLES30.GL_TRIANGLES, drawIndicesBuff.capacity(), GLES30.GL_UNSIGNED_BYTE, 0);
 
@@ -196,6 +226,27 @@ public class CubeAnimator extends Animator {
         int textureId[] = new int[1];
         GLES30.glGenTextures(1,textureId,0);
         GLES30.glBindTexture(GLES30.GL_TEXTURE_CUBE_MAP,textureId[0]);
+        byte[][] imgBuffer = new byte[6][];
+        for (int i = 0 ; i< 6;++i){
+            String tag = "n" + (i+1);
+            int resourceId = context.getResources().getIdentifier(tag,"mipmap",context.getPackageName());
+            Log.d(TAG, "genCubeTexture resource id : " + resourceId + " package name:" + context.getPackageName() + " img name:" + tag);
+            BitmapFactory.Options options = new BitmapFactory.Options();
+            options.inJustDecodeBounds = false;
+            options.inSampleSize = 1;//这个参数设置为true才有效，
+            imgBuffer[i] = BitmapUtils.bitmap2ARGB(BitmapFactory.decodeResource(context.getResources(),resourceId,options));
+            Log.d(TAG, "genCubeTexture imgbuffer size: "+ imgBuffer[i].length);
+        }
+        final int width = 350;
+        GLES30.glTexImage2D(GLES30.GL_TEXTURE_CUBE_MAP_POSITIVE_X,0,GLES30.GL_RGBA,width,width,0,GLES30.GL_RGBA, GLES20.GL_UNSIGNED_BYTE,ByteBuffer.allocateDirect(width*width*4).order(ByteOrder.nativeOrder()).put(imgBuffer[0]).position(0));
+        GLES30.glTexImage2D(GLES30.GL_TEXTURE_CUBE_MAP_NEGATIVE_X,0,GLES30.GL_RGBA,width,width,0,GLES30.GL_RGBA, GLES20.GL_UNSIGNED_BYTE,ByteBuffer.allocateDirect(width*width*4).order(ByteOrder.nativeOrder()).put(imgBuffer[1]).position(0));
+        GLES30.glTexImage2D(GLES30.GL_TEXTURE_CUBE_MAP_POSITIVE_Y,0,GLES30.GL_RGBA,width,width,0,GLES30.GL_RGBA, GLES20.GL_UNSIGNED_BYTE,ByteBuffer.allocateDirect(width*width*4).order(ByteOrder.nativeOrder()).put(imgBuffer[2]).position(0));
+        GLES30.glTexImage2D(GLES30.GL_TEXTURE_CUBE_MAP_NEGATIVE_Y,0,GLES30.GL_RGBA,width,width,0,GLES30.GL_RGBA, GLES20.GL_UNSIGNED_BYTE,ByteBuffer.allocateDirect(width*width*4).order(ByteOrder.nativeOrder()).put(imgBuffer[3]).position(0));
+        GLES30.glTexImage2D(GLES30.GL_TEXTURE_CUBE_MAP_POSITIVE_Z,0,GLES30.GL_RGBA,width,width,0,GLES30.GL_RGBA, GLES20.GL_UNSIGNED_BYTE,ByteBuffer.allocateDirect(width*width*4).order(ByteOrder.nativeOrder()).put(imgBuffer[4]).position(0));
+        GLES30.glTexImage2D(GLES30.GL_TEXTURE_CUBE_MAP_NEGATIVE_Z,0,GLES30.GL_RGBA,width,width,0,GLES30.GL_RGBA, GLES20.GL_UNSIGNED_BYTE,ByteBuffer.allocateDirect(width*width*4).order(ByteOrder.nativeOrder()).put(imgBuffer[5]).position(0));
+        GLES30.glTexParameteri(GLES30.GL_TEXTURE_CUBE_MAP,GLES30.GL_TEXTURE_MIN_FILTER,GLES30.GL_NEAREST);
+        GLES30.glTexParameteri(GLES30.GL_TEXTURE_CUBE_MAP,GLES30.GL_TEXTURE_MAG_FILTER,GLES30.GL_NEAREST);
 
+        return textureId[0];
     }
 }

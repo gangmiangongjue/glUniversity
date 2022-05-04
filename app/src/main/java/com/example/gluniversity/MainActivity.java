@@ -12,9 +12,6 @@ import android.widget.TextView;
 import com.example.gluniversity.databinding.ActivityMainBinding;
 import com.example.gluniversity.gl.animator.Animator;
 import com.example.gluniversity.gl.animator.CubeAnimator;
-import com.example.gluniversity.gl.polygon.Polygon;
-import com.example.gluniversity.gl.polygon.Square;
-import com.example.gluniversity.gl.polygon.Triangle;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;

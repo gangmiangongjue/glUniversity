@@ -26,6 +26,7 @@ public abstract class Animator {
                     "uniform mat4 mvpMatrix;\n"+
                     "uniform lowp int isDrawCoor;\n"+
                     "layout(location =2)in vec3 a_normal;\n"+
+                    "out vec3 v_normal;\n"+
                     "void main() {\n" +
                     "if(isDrawCoor == 1){\n"+
                         "tColor = vColor;\n"+
