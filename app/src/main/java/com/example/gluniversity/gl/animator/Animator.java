@@ -11,8 +11,14 @@ import java.nio.FloatBuffer;
 
 public abstract class Animator {
     private final static String TAG = "Animator";
+    protected final static int TEXTURE_DIMENSION = 2;
     protected final static int VERTEX_DIMENSION = 3;
     protected final static int COLOR_DIMENSION = 4;
+
+    protected final static int VERTEX_LOCATION = 0;
+    protected final static int COLOR_LOCATION = 1;
+    protected final static int NORMAL_LOCATION = 2;
+    protected final static int TEXTURE_LOCATION = 2;
 
     public final static int ROTATE_X = 0 ;
     public final static int ROTATE_Y = 1 ;
@@ -26,28 +32,37 @@ public abstract class Animator {
                     "uniform mat4 mvpMatrix;\n"+
                     "uniform lowp int isDrawCoor;\n"+
                     "layout(location =2)in vec3 a_normal;\n"+
+                    "layout(location =3)in vec2 a_texture;\n"+
                     "out vec3 v_normal;\n"+
+                    "out vec2 v_texture;\n"+
                     "void main() {\n" +
                     "if(isDrawCoor == 1){\n"+
                         "tColor = vColor;\n"+
-                        " gl_Position = vPosition;}\n" +
-                    "else{\n"+
+                        "gl_Position = mvpMatrix*vPosition;}\n" +
+                    "else if(isDrawCoor == 2){\n"+
                         "v_normal =  a_normal;\n" +
                         "gl_Position = mvpMatrix*vPosition;}\n" +
+                    "else{\n" +
+                        "gl_Position = mvpMatrix*vPosition;\n" +
+                        "v_texture = a_texture;}\n"+
                     "}\n";
     protected String fragmentShaderCode =
             "#version 300 es \n"+
-                    "precision lowp float;\n" +
+                    "precision mediump float;\n" +
                     "in vec4 tColor;\n" +
                     "uniform lowp int isDrawCoor;\n"+
                     "out vec4 fragColor;\n"+
                     "in vec3 v_normal;\n"+
+                    "in vec2 v_texture;\n"+
                     "uniform samplerCube sampler;\n" +
+                    "uniform sampler2D sampler2;\n" +
                     "void main() {\n" +
                     "if(isDrawCoor == 1){\n"+
                         "fragColor = tColor;}\n" +
-                    "else{\n"+
+                    "else if(isDrawCoor == 2){\n"+
                         "fragColor = texture(sampler,v_normal);}\n" +
+                    "else{\n"+
+                        "fragColor = texture(sampler2,v_texture);}\n"+
                     "}\n";
     protected FloatBuffer vertexBuff;
     protected FloatBuffer colorBuff;
@@ -61,9 +76,9 @@ public abstract class Animator {
 
     public void initGL(){
         program = GLES30.glCreateProgram();
-        int VERTEXShader = ESGLUtils.loadShader(vertexShaderCode,GLES30.GL_VERTEX_SHADER);
+        int vertexShader = ESGLUtils.loadShader(vertexShaderCode,GLES30.GL_VERTEX_SHADER);
         int fragmentShader = ESGLUtils.loadShader(fragmentShaderCode,GLES30.GL_FRAGMENT_SHADER);
-        GLES30.glAttachShader(program,VERTEXShader);
+        GLES30.glAttachShader(program,vertexShader);
         GLES30.glAttachShader(program,fragmentShader);
         GLES30.glLinkProgram(program);
 

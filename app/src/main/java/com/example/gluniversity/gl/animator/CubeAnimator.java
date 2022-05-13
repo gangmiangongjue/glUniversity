@@ -19,9 +19,10 @@ import java.nio.FloatBuffer;
 public class CubeAnimator extends Animator {
 
     private final static String TAG = "CubeAnimator";
-    private final static int VERTEX_LOCATION = 0;
-    private final static int COLOR_LOCATION = 1;
-    private final static int NORMAL_LOCATION = 2;
+    protected final static int VERTEX_LOCATION = 0;
+    protected final static int COLOR_LOCATION = 1;
+    protected final static int NORMAL_LOCATION = 2;
+
     private int degree = 0;
     private int[] VERTEXBufferArrayID = new int[]{0};
 
@@ -32,6 +33,40 @@ public class CubeAnimator extends Animator {
     private Context context;
 
     public CubeAnimator(Context context) {
+        vertexShaderCode =
+                "#version 300 es \n"+
+                        "layout(location = 0)in vec4 vPosition;\n" +  //写成out就报1281错误了
+                        "layout(location = 1)in vec4 vColor;\n"+
+                        "out vec4 tColor;\n"+
+                        "uniform mat4 mvpMatrix;\n"+
+                        "uniform lowp int isDrawCoor;\n"+
+                        "layout(location =2)in vec3 a_normal;\n"+
+                        "layout(location =3)in vec2 a_texture;\n"+
+                        "out vec3 v_normal;\n"+
+                        "out vec2 v_texture;\n"+
+                        "void main() {\n" +
+                        "if(isDrawCoor == 1){\n"+
+                        "tColor = vColor;\n"+
+                        "gl_Position = mvpMatrix*vPosition;}\n" +
+                        "else{\n"+
+                        "v_normal =  a_normal;\n" +
+                        "gl_Position = mvpMatrix*vPosition;}\n" +
+                        "}\n";
+        fragmentShaderCode =
+                "#version 300 es \n"+
+                        "precision mediump float;\n" +
+                        "in vec4 tColor;\n" +
+                        "uniform lowp int isDrawCoor;\n"+
+                        "out vec4 fragColor;\n"+
+                        "in vec3 v_normal;\n"+
+                        "in vec2 v_texture;\n"+
+                        "uniform samplerCube sampler;\n" +
+                        "void main() {\n" +
+                        "if(isDrawCoor == 1){\n"+
+                        "fragColor = tColor;}\n" +
+                        "else{\n"+
+                        "fragColor = texture(sampler,v_normal);}\n" +
+                        "}\n";
         this.context = context;
         float[] vertex = new float[]{//x,y,z,w
                 0.0f, 0.5f, 0.25f,
@@ -125,6 +160,7 @@ public class CubeAnimator extends Animator {
 
             GLES30.glEnableVertexAttribArray(VERTEX_LOCATION);
             GLES30.glEnableVertexAttribArray(COLOR_LOCATION);
+            GLES30.glEnableVertexAttribArray(NORMAL_LOCATION);
 
             GLES30.glGenBuffers(3, bufferIds, 0);
             GLES30.glBindBuffer(GLES30.GL_ARRAY_BUFFER, bufferIds[0]);
@@ -234,10 +270,10 @@ public class CubeAnimator extends Animator {
             BitmapFactory.Options options = new BitmapFactory.Options();
             options.inJustDecodeBounds = false;
             options.inSampleSize = 1;//这个参数设置为true才有效，
-            imgBuffer[i] = BitmapUtils.bitmap2ARGB(BitmapFactory.decodeResource(context.getResources(),resourceId,options));
+            imgBuffer[i] = BitmapUtils.bitmap2RGB(BitmapFactory.decodeResource(context.getResources(),resourceId,options));
             Log.d(TAG, "genCubeTexture imgbuffer size: "+ imgBuffer[i].length);
         }
-        final int width = 350;
+        final int width = 400;
         GLES30.glTexImage2D(GLES30.GL_TEXTURE_CUBE_MAP_POSITIVE_X,0,GLES30.GL_RGBA,width,width,0,GLES30.GL_RGBA, GLES20.GL_UNSIGNED_BYTE,ByteBuffer.allocateDirect(width*width*4).order(ByteOrder.nativeOrder()).put(imgBuffer[0]).position(0));
         GLES30.glTexImage2D(GLES30.GL_TEXTURE_CUBE_MAP_NEGATIVE_X,0,GLES30.GL_RGBA,width,width,0,GLES30.GL_RGBA, GLES20.GL_UNSIGNED_BYTE,ByteBuffer.allocateDirect(width*width*4).order(ByteOrder.nativeOrder()).put(imgBuffer[1]).position(0));
         GLES30.glTexImage2D(GLES30.GL_TEXTURE_CUBE_MAP_POSITIVE_Y,0,GLES30.GL_RGBA,width,width,0,GLES30.GL_RGBA, GLES20.GL_UNSIGNED_BYTE,ByteBuffer.allocateDirect(width*width*4).order(ByteOrder.nativeOrder()).put(imgBuffer[2]).position(0));
