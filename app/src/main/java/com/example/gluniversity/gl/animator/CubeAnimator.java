@@ -1,6 +1,7 @@
 package com.example.gluniversity.gl.animator;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
@@ -37,17 +38,15 @@ public class CubeAnimator extends Animator {
                 "#version 300 es \n"+
                         "layout(location = 0)in vec4 vPosition;\n" +  //写成out就报1281错误了
                         "layout(location = 1)in vec4 vColor;\n"+
+                        "layout(location = 2)in vec3 a_normal;\n"+
                         "out vec4 tColor;\n"+
                         "uniform mat4 mvpMatrix;\n"+
                         "uniform lowp int isDrawCoor;\n"+
-                        "layout(location =2)in vec3 a_normal;\n"+
-                        "layout(location =3)in vec2 a_texture;\n"+
                         "out vec3 v_normal;\n"+
-                        "out vec2 v_texture;\n"+
                         "void main() {\n" +
                         "if(isDrawCoor == 1){\n"+
                         "tColor = vColor;\n"+
-                        "gl_Position = mvpMatrix*vPosition;}\n" +
+                        "gl_Position = vPosition;}\n" +
                         "else{\n"+
                         "v_normal =  a_normal;\n" +
                         "gl_Position = mvpMatrix*vPosition;}\n" +
@@ -59,13 +58,13 @@ public class CubeAnimator extends Animator {
                         "uniform lowp int isDrawCoor;\n"+
                         "out vec4 fragColor;\n"+
                         "in vec3 v_normal;\n"+
-                        "in vec2 v_texture;\n"+
                         "uniform samplerCube sampler;\n" +
                         "void main() {\n" +
                         "if(isDrawCoor == 1){\n"+
                         "fragColor = tColor;}\n" +
                         "else{\n"+
                         "fragColor = texture(sampler,v_normal);}\n" +
+//                        "fragColor = vec4(v_normal,1.0);}\n" +
                         "}\n";
         this.context = context;
         float[] vertex = new float[]{//x,y,z,w
@@ -88,13 +87,13 @@ public class CubeAnimator extends Animator {
         };
         float[] vertexLine = new float[]{
                 -1.0f,0.0f,0.0f,
-                0.0f, 0.0f, 1.0f, 1.0f,
+                0.0f, 1.0f, 0.0f, 1.0f,
                 1.0f,0.0f,0.0f,
-                0.0f, 0.0f, 1.0f, 1.0f,
+                0.0f, 1.0f, 0.0f, 1.0f,
                 0.0f,1.0f,0.0f,
-                0.0f, 0.0f, 1.0f, 1.0f,
+                0.0f, 1.0f, 0.0f, 1.0f,
                 0.0f,-1.0f,0.0f,
-                0.0f, 0.0f, 1.0f, 1.0f
+                0.0f, 1.0f, 0.0f, 1.0f
         };
 
         vertexBuffLine = ByteBuffer.allocateDirect(vertexLine.length*4).order(ByteOrder.nativeOrder()).asFloatBuffer();
@@ -153,13 +152,15 @@ public class CubeAnimator extends Animator {
         GLES30.glUseProgram(program);
 
         GLES30.glEnable(GLES30.GL_CULL_FACE);
+        GLES30.glEnable(GLES30.GL_BLEND);//必须设置，不然没有alpha
+        GLES30.glBlendFunc(GLES30.GL_SRC_ALPHA, GLES30.GL_ONE_MINUS_SRC_ALPHA);
+        GLES30.glBlendEquation(GLES30.GL_FUNC_ADD);
 //        GLES30.glEnable(GLES30.GL_DEPTH_TEST);
 //        GLES30.glDepthFunc(GLES30.GL_LESS);
         if (bufferIds[0] == 0 || bufferIds[1] == 0 || bufferIds[2] == 0) {
             Log.d(TAG, "first draw: create buffer");
 
             GLES30.glEnableVertexAttribArray(VERTEX_LOCATION);
-            GLES30.glEnableVertexAttribArray(COLOR_LOCATION);
             GLES30.glEnableVertexAttribArray(NORMAL_LOCATION);
 
             GLES30.glGenBuffers(3, bufferIds, 0);
@@ -167,7 +168,6 @@ public class CubeAnimator extends Animator {
             GLES30.glBufferData(GLES30.GL_ARRAY_BUFFER, 4 * vertexBuff.capacity(), vertexBuff, GLES30.GL_STATIC_DRAW);
 
             GLES30.glVertexAttribPointer(VERTEX_LOCATION, VERTEX_DIMENSION, GLES30.GL_FLOAT, false, (VERTEX_DIMENSION + VERTEX_DIMENSION) * 4, 0);//一组几个，一个多大，每隔多少取一组，偏移多少
-
             GLES30.glVertexAttribPointer(NORMAL_LOCATION, VERTEX_DIMENSION, GLES30.GL_FLOAT, false, (VERTEX_DIMENSION + VERTEX_DIMENSION) * 4, VERTEX_DIMENSION * 4);
 
             Log.d(TAG, "draw1: " + GLES30.glGetError());
@@ -198,7 +198,7 @@ public class CubeAnimator extends Animator {
             return;
         }
 
-//        degree++;
+        degree++;
         double radian = degree*Math.PI/180;
         float cos = (float) Math.cos(radian);
         float sin = (float) Math.sin(radian);
@@ -232,17 +232,21 @@ public class CubeAnimator extends Animator {
         Log.d(TAG, "draw0.82: " + GLES30.glGetError());
         GLES30.glDrawArrays(GLES30.GL_LINES,0,4);
         Log.d(TAG, "draw0.9: " + GLES30.glGetError());
-        GLES30.glUniform1i(drawLocation,0);
+
+
+        GLES30.glUniform1i(drawLocation,2);
         Matrix.multiplyMM(mvpMatrix,0,matrix,0,matrix_tran,0);//右侧的最先实行变换，因为离点近嘛
         Log.d(TAG, "draw1.0: " + GLES30.glGetError());
         GLES30.glBindVertexArray(0);
         Log.d(TAG, "draw1.1: " + GLES30.glGetError());
+
         int samplerLocation = GLES30.glGetUniformLocation(program,"sampler");
         Log.d(TAG, "draw1.2: " + GLES30.glGetError());
         if (samplerLocation == -1) {
             Log.d(TAG, "draw : get matrixLocation error");
             return;
         }
+
         GLES30.glActiveTexture(GLES30.GL_TEXTURE0);
         Log.d(TAG, "draw2: " + GLES30.glGetError());
         GLES30.glBindTexture(GLES30.GL_TEXTURE_CUBE_MAP,cubeTexId);
@@ -259,10 +263,11 @@ public class CubeAnimator extends Animator {
     }
 
     private int genCubeTexture(){
-        int textureId[] = new int[1];
+        int[] textureId= new int[1];
         GLES30.glGenTextures(1,textureId,0);
         GLES30.glBindTexture(GLES30.GL_TEXTURE_CUBE_MAP,textureId[0]);
         byte[][] imgBuffer = new byte[6][];
+        int width =0;
         for (int i = 0 ; i< 6;++i){
             String tag = "n" + (i+1);
             int resourceId = context.getResources().getIdentifier(tag,"mipmap",context.getPackageName());
@@ -270,16 +275,22 @@ public class CubeAnimator extends Animator {
             BitmapFactory.Options options = new BitmapFactory.Options();
             options.inJustDecodeBounds = false;
             options.inSampleSize = 1;//这个参数设置为true才有效，
-            imgBuffer[i] = BitmapUtils.bitmap2RGB(BitmapFactory.decodeResource(context.getResources(),resourceId,options));
+            Bitmap bitmap = BitmapFactory.decodeResource(context.getResources(),resourceId,options);
+            width = bitmap.getWidth();
+            imgBuffer[i] = BitmapUtils.bitmap2RGBA(bitmap);
             Log.d(TAG, "genCubeTexture imgbuffer size: "+ imgBuffer[i].length);
         }
-        final int width = 400;
-        GLES30.glTexImage2D(GLES30.GL_TEXTURE_CUBE_MAP_POSITIVE_X,0,GLES30.GL_RGBA,width,width,0,GLES30.GL_RGBA, GLES20.GL_UNSIGNED_BYTE,ByteBuffer.allocateDirect(width*width*4).order(ByteOrder.nativeOrder()).put(imgBuffer[0]).position(0));
-        GLES30.glTexImage2D(GLES30.GL_TEXTURE_CUBE_MAP_NEGATIVE_X,0,GLES30.GL_RGBA,width,width,0,GLES30.GL_RGBA, GLES20.GL_UNSIGNED_BYTE,ByteBuffer.allocateDirect(width*width*4).order(ByteOrder.nativeOrder()).put(imgBuffer[1]).position(0));
-        GLES30.glTexImage2D(GLES30.GL_TEXTURE_CUBE_MAP_POSITIVE_Y,0,GLES30.GL_RGBA,width,width,0,GLES30.GL_RGBA, GLES20.GL_UNSIGNED_BYTE,ByteBuffer.allocateDirect(width*width*4).order(ByteOrder.nativeOrder()).put(imgBuffer[2]).position(0));
-        GLES30.glTexImage2D(GLES30.GL_TEXTURE_CUBE_MAP_NEGATIVE_Y,0,GLES30.GL_RGBA,width,width,0,GLES30.GL_RGBA, GLES20.GL_UNSIGNED_BYTE,ByteBuffer.allocateDirect(width*width*4).order(ByteOrder.nativeOrder()).put(imgBuffer[3]).position(0));
-        GLES30.glTexImage2D(GLES30.GL_TEXTURE_CUBE_MAP_POSITIVE_Z,0,GLES30.GL_RGBA,width,width,0,GLES30.GL_RGBA, GLES20.GL_UNSIGNED_BYTE,ByteBuffer.allocateDirect(width*width*4).order(ByteOrder.nativeOrder()).put(imgBuffer[4]).position(0));
-        GLES30.glTexImage2D(GLES30.GL_TEXTURE_CUBE_MAP_NEGATIVE_Z,0,GLES30.GL_RGBA,width,width,0,GLES30.GL_RGBA, GLES20.GL_UNSIGNED_BYTE,ByteBuffer.allocateDirect(width*width*4).order(ByteOrder.nativeOrder()).put(imgBuffer[5]).position(0));
+        if (width == 0){
+            Log.e(TAG, "genCubeTexture: "+ "gene bitmap error");
+            return 0;
+        }
+        int height = width;
+        GLES30.glTexImage2D(GLES30.GL_TEXTURE_CUBE_MAP_POSITIVE_X,0,GLES30.GL_RGBA,width,height,0,GLES30.GL_RGBA, GLES20.GL_UNSIGNED_BYTE,ByteBuffer.allocateDirect(width*height*4).order(ByteOrder.nativeOrder()).put(imgBuffer[0]).position(0));
+        GLES30.glTexImage2D(GLES30.GL_TEXTURE_CUBE_MAP_NEGATIVE_X,0,GLES30.GL_RGBA,width,height,0,GLES30.GL_RGBA, GLES20.GL_UNSIGNED_BYTE,ByteBuffer.allocateDirect(width*height*4).order(ByteOrder.nativeOrder()).put(imgBuffer[1]).position(0));
+        GLES30.glTexImage2D(GLES30.GL_TEXTURE_CUBE_MAP_POSITIVE_Y,0,GLES30.GL_RGBA,width,height,0,GLES30.GL_RGBA, GLES20.GL_UNSIGNED_BYTE,ByteBuffer.allocateDirect(width*height*4).order(ByteOrder.nativeOrder()).put(imgBuffer[2]).position(0));
+        GLES30.glTexImage2D(GLES30.GL_TEXTURE_CUBE_MAP_NEGATIVE_Y,0,GLES30.GL_RGBA,width,height,0,GLES30.GL_RGBA, GLES20.GL_UNSIGNED_BYTE,ByteBuffer.allocateDirect(width*height*4).order(ByteOrder.nativeOrder()).put(imgBuffer[3]).position(0));
+        GLES30.glTexImage2D(GLES30.GL_TEXTURE_CUBE_MAP_POSITIVE_Z,0,GLES30.GL_RGBA,width,height,0,GLES30.GL_RGBA, GLES20.GL_UNSIGNED_BYTE,ByteBuffer.allocateDirect(width*height*4).order(ByteOrder.nativeOrder()).put(imgBuffer[4]).position(0));
+        GLES30.glTexImage2D(GLES30.GL_TEXTURE_CUBE_MAP_NEGATIVE_Z,0,GLES30.GL_RGBA,width,height,0,GLES30.GL_RGBA, GLES20.GL_UNSIGNED_BYTE,ByteBuffer.allocateDirect(width*height*4).order(ByteOrder.nativeOrder()).put(imgBuffer[5]).position(0));
         GLES30.glTexParameteri(GLES30.GL_TEXTURE_CUBE_MAP,GLES30.GL_TEXTURE_MIN_FILTER,GLES30.GL_NEAREST);
         GLES30.glTexParameteri(GLES30.GL_TEXTURE_CUBE_MAP,GLES30.GL_TEXTURE_MAG_FILTER,GLES30.GL_NEAREST);
 

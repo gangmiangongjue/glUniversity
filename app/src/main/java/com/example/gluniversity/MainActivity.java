@@ -4,6 +4,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.PixelFormat;
 import android.graphics.YuvImage;
 import android.opengl.GLES30;
 import android.opengl.GLSurfaceView;
@@ -19,6 +20,8 @@ import com.example.gluniversity.gl.animator.Animator;
 import com.example.gluniversity.gl.animator.CubeAnimator;
 import com.example.gluniversity.gl.animator.Nv21Animator;
 import com.example.gluniversity.gl.animator.PlaneAnimator;
+import com.example.gluniversity.gl.light.Light;
+import com.example.gluniversity.gl.light.SpotLight;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -33,10 +36,13 @@ public class MainActivity extends AppCompatActivity {
     static {
         System.loadLibrary("gluniversity");
     }
+    private final static int LIGHT_SPOTLIGHT = 0;
 
     private ActivityMainBinding binding;
-    private Animator animator;
+    private Light light;
     GLSurfaceView glSurfaceView;
+
+    private int lightType = LIGHT_SPOTLIGHT;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -47,31 +53,36 @@ public class MainActivity extends AppCompatActivity {
         // Example of a call to a native method
         glSurfaceView = binding.sampleText;
         glSurfaceView.setEGLContextClientVersion(3);//should set before setRender
+        glSurfaceView.setEGLConfigChooser(8,8,8,8,0,0);
+        glSurfaceView.getHolder().setFormat(PixelFormat.RGBA_8888);
         glSurfaceView.setRenderer(new GLSurfaceView.Renderer() {
             @Override
             public void onSurfaceCreated(GL10 gl, EGLConfig config) {
-                if (false){
-                    animator = new Nv21Animator(MainActivity.this);
-                }else {
-                    animator = new CubeAnimator(MainActivity.this);
+                switch (lightType){
+                    case LIGHT_SPOTLIGHT:
+                        light = new SpotLight(MainActivity.this);
+                        break;
                 }
-                animator.initGL();
+
+                light.initGL();
             }
 
             @Override
             public void onSurfaceChanged(GL10 gl, int width, int height) {
-                animator.onViewportChange(width,height);
+                light.onViewportChange(width,height);
             }
 
             @Override
             public void onDrawFrame(GL10 gl) {
-                animator.draw(Animator.ROTATE_X);
+                light.draw(Light.ROTATE_Y);
             }
         });
 
-        String tag = "n" + 8;
+        String tag = "n" + 1;//需要改一下width
+        /* for yuv
         int resourceId = getResources().getIdentifier(tag,"raw",getPackageName());
         Log.d(TAG, "onCreate resource id : " + resourceId + " package name:" + getPackageName() + " img name:" + tag);
+
         int width = 600;
         int height = width;
         InputStream inputStream = getResources().openRawResource(resourceId);
@@ -92,8 +103,13 @@ public class MainActivity extends AppCompatActivity {
         int[] combine = new int[width*height];
         BitmapUtils.NV21ToARGB(nv21,width,height,combine);
 
+
         ImageView imageView = binding.sampleImg;
         imageView.setImageBitmap(Bitmap.createBitmap(combine,0,width,width,height,Bitmap.Config.ARGB_8888));
+        */
+        int resourceId = getResources().getIdentifier(tag,"mipmap",getPackageName());
+        ImageView imageView = binding.sampleImg;
+        imageView.setImageBitmap(BitmapFactory.decodeResource(getResources(),resourceId));
     }
 
     @Override

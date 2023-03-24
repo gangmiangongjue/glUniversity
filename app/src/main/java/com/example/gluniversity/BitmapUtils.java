@@ -48,6 +48,7 @@ public class BitmapUtils {
             rgba[i * 4 + 1] = (byte) ((val >> 8) & 0xFF);//G
             rgba[i * 4 + 2] = (byte) (val & 0xFF);//B
             rgba[i * 4 + 3] = (byte) ((val >> 24) & 0xFF);//A
+//            Log.d(TAG, "bitmap2RGBA alpha: "+ (int)(rgba[i*4+3]&0xFF)+ " r:"+ (int)(rgba[i*4]&0xFF)+ " g:"+ (int)(rgba[i*4+1]&0xFF)+ " b:"+ (int)(rgba[i*4+2]&0xFF) + " index:"+i );
         }
         return rgba;
     }
@@ -72,7 +73,6 @@ public class BitmapUtils {
             byte b = (byte) (val & 0xFF);//B
             byte a = (byte) ((val >> 24) & 0xFF);//A
             intValues[i] = ((r & 0xFF)<<24) | ((g&0xFF)<<16) | ((b&0xFF) << 8) | (a & 0xFF);
-//            intValues[i] = ((r<<24) & 0xFF000000) | ((g<<16)&0xFF0000) | ((b<<8)&0xFF00) | 0;
         }
         return intValues;
     }

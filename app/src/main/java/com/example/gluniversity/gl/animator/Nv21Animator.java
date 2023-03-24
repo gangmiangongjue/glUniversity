@@ -49,14 +49,14 @@ public class Nv21Animator extends Animator {
                         "uniform sampler2D samplerY;\n" +
                         "uniform sampler2D samplerUV;\n" +
                         "void main() {\n" +
-                        "float y,u,v,r,g,b;\n"+
-                        "y = texture(samplerY,v_texture).r;\n"+
-                        "u = texture(samplerUV,v_texture).a-0.5;\n"+
-                        "v = texture(samplerUV,v_texture).r-0.5;\n"+
-                        "r = y+1.13983*v;\n"+
-                        "g = y-0.39465*u-0.58060*v;\n"+
-                        "b = y+2.03211*u;\n"+
-                        "fragColor = vec4(r,g,b,1.0);\n"+
+                        "vec3 yuv;\n"+
+                        "yuv.x = texture(samplerY,v_texture).r;\n"+
+                        "yuv.y = texture(samplerUV,v_texture).a-0.5;\n"+
+                        "yuv.z = texture(samplerUV,v_texture).r-0.5;\n"+
+                        "vec3 rgb = mat3(1,1,1,;\n"+
+                        "0,-0.39465,2.03211,\n"+
+                        "1.13983,-0.58060,0)*yuv\n"+//use mat to make caculate more effective
+                        "fragColor = vec4(rgb,1.0);\n"+
                         "}\n";
         float[] vertex = new float[]{//x,y,z,w
                 -1.0f, 1.0f, 0.0f,
@@ -188,7 +188,7 @@ public class Nv21Animator extends Animator {
         GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D,GLES30.GL_TEXTURE_WRAP_T,GLES30.GL_CLAMP_TO_EDGE);
 
         GLES30.glBindTexture(GLES30.GL_TEXTURE_2D,texIds[1]);
-        GLES30.glTexImage2D(GLES30.GL_TEXTURE_2D,0,GLES30.GL_LUMINANCE_ALPHA,width/2,height/2,0,GLES30.GL_LUMINANCE_ALPHA, GLES20.GL_UNSIGNED_BYTE,ByteBuffer.allocateDirect(width*height/2).order(ByteOrder.nativeOrder()).put(nv21,width*height,width*height/2).position(0));
+        GLES30.glTexImage2D(GLES30.GL_TEXTURE_2D,0,GLES30.GL_LUMINANCE_ALPHA,width/2,height/2,0,GLES30.GL_LUMINANCE_ALPHA, GLES20.GL_UNSIGNED_BYTE,ByteBuffer.allocateDirect(width*height/2).order(ByteOrder.nativeOrder()).put(nv21,width*height,width*height/2).position(0));//width and height size is very important, gl up sample it automatically
 
         GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D,GLES30.GL_TEXTURE_MIN_FILTER,GLES30.GL_LINEAR);
         GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D,GLES30.GL_TEXTURE_MAG_FILTER,GLES30.GL_LINEAR);

@@ -1,4 +1,4 @@
-package com.example.gluniversity.gl.animator;
+package com.example.gluniversity.gl.light;
 
 import android.opengl.GLES20;
 import android.opengl.GLES30;
@@ -9,9 +9,9 @@ import com.example.gluniversity.gl.ESGLUtils;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 
-public abstract class Animator {
+public abstract class Light {
     private final static String TAG = "Animator";
-    protected final static int TEXTURE_DIMENSION = 2;
+    protected final static int NORMAL_DIMENSION = 3;
     protected final static int VERTEX_DIMENSION = 3;
     protected final static int COLOR_DIMENSION = 4;
 
@@ -23,11 +23,12 @@ public abstract class Animator {
     protected String fragmentShaderCode = "";
     protected FloatBuffer vertexBuff;
     protected FloatBuffer colorBuff;
-    protected ByteBuffer drawIndicesBuff;
+    protected ByteBuffer drawIndicesBuff,drawIndicesBuffLine;
     int program = 0;
-    protected int[] bufferIds = new int[]{0,0,0};
+    protected int[] bufferIds = new int[]{0,0,0,0};
 
-    Animator(){
+
+    Light(){
 
     }
 
@@ -49,7 +50,7 @@ public abstract class Animator {
             }
             return;
         }
-        GLES30.glClearColor(0.0f,0.0f,0.0f, 1.0f);
+        GLES30.glClearColor(1.0f,1.0f,1.0f, 1.0f);
 
     }
     public void onViewportChange(int width ,int height){

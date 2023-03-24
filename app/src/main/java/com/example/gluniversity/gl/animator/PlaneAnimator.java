@@ -5,6 +5,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.opengl.GLES20;
 import android.opengl.GLES30;
+import android.opengl.GLUtils;
 import android.opengl.Matrix;
 import android.util.Log;
 
@@ -86,7 +87,8 @@ public class PlaneAnimator extends Animator {
             Log.d(TAG, "draw program unavailable return: ");
         }
         GLES30.glUseProgram(program);
-
+        GLES30.glEnable(GLES30.GL_BLEND);//必须设置，不然没有alpha
+        GLES30.glBlendFunc(GLES30.GL_ONE, GLES30.GL_SRC_COLOR);
         GLES30.glEnable(GLES30.GL_CULL_FACE);
 //        GLES30.glEnable(GLES30.GL_DEPTH_TEST);
 //        GLES30.glDepthFunc(GLES30.GL_LESS);
@@ -137,7 +139,7 @@ public class PlaneAnimator extends Animator {
         GLES30.glGenTextures(1,textureId,0);
         GLES30.glBindTexture(GLES30.GL_TEXTURE_2D,textureId[0]);
 
-        String tag = "n" + 7;
+        String tag = "n1";
         int resourceId = context.getResources().getIdentifier(tag,"mipmap",context.getPackageName());
         Log.d(TAG, "gen2DTexture resource id : " + resourceId + " package name:" + context.getPackageName() + " img name:" + tag);
 
@@ -149,6 +151,7 @@ public class PlaneAnimator extends Animator {
                 GLES30.glTexImage2D(GLES30.GL_TEXTURE_2D,0,GLES30.GL_RGB,bitmap.getWidth(),bitmap.getHeight(),0,GLES30.GL_RGB, GLES20.GL_UNSIGNED_BYTE,ByteBuffer.allocateDirect(rgb.length).order(ByteOrder.nativeOrder()).put(rgb).position(0));
                 break;
             case TYPE_RGBA:
+//                GLUtils.texImage2D(GLES30.GL_TEXTURE_2D,0,bitmap,0);
                 byte[] rgba = BitmapUtils.bitmap2RGBA(bitmap);
                 ByteBuffer rgbaBuffer = ByteBuffer.allocateDirect(rgba.length).order(ByteOrder.nativeOrder()).put(rgba);
                 rgbaBuffer.position(0);
@@ -157,6 +160,7 @@ public class PlaneAnimator extends Animator {
             case TYPE_RGBA_COMBINE:
                 int[] rgbaCombine = BitmapUtils.bitmap2RGBACombine(bitmap);
                 GLES30.glTexImage2D(GLES30.GL_TEXTURE_2D,0,GLES30.GL_RGBA,bitmap.getWidth(),bitmap.getHeight(),0,GLES30.GL_RGBA, GLES20.GL_UNSIGNED_BYTE,ByteBuffer.allocateDirect(rgbaCombine.length*4).order(ByteOrder.BIG_ENDIAN).asIntBuffer().put(rgbaCombine).position(0));
+
                 break;
             default:
                 break;

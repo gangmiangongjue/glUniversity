@@ -1,0 +1,75 @@
+#version 300 es
+layout(location = 0)in vec4 vPosition;
+layout(location = 1)in vec3 a_normal;
+layout(location = 2)in vec4 a_color;
+uniform mat4 mvpMatrix;
+out vec3 v_normal;
+out vec4 t_color;
+
+struct spot_light{
+    vec4 position;
+    vec4 ambient_color;
+    vec4 diffuse_color;
+    vec4 specular_color;
+    vec3 spot_direction;
+    vec3 attenuation_factors;
+    bool compute_distance_attenuation;
+    float spot_exponent;
+    float spot_cutoff_angle;
+};
+struct material_properties{
+    vec4 ambient_color;
+    vec4 diffuse_color;
+    vec4 specular_color;
+    float specular_exponent;
+};
+
+const float c_zero = 0.0;
+const float c_one = 1.0;
+uniform material_properties material;
+uniform spot_light light;
+
+vec4 spot_light_color(vec3 normal,vec4 position){
+    vec4 computed_color = vec4(c_zero,c_zero,c_zero,c_zero);
+    vec3 light_dir;
+    vec3 half_plane;
+    float ndotl,ndoth;
+    float attr_factor = c_one;//attenuation factor
+    light_dir = light.position.xyz - position.xyz;//light direction
+    if(light.compute_distance_attenuation){
+        vec3 attr_dist;
+        attr_dist.x = c_one;
+        attr_dist.z = dot(light_dir,light_dir);
+        attr_dist.y = sqrt(attr_dist.z);//https://blog.csdn.net/lidec/article/details/51920106
+        attr_factor = c_one / dot(attr_dist,light.attenuation_factors);//cacu attenuation according distance, https://zhuanlan.zhihu.com/p/150570139
+    }
+
+    light_dir = normalize(light_dir);
+    if(light.spot_cutoff_angle < 180.0){
+        float spot_factor = dot(-light_dir,light.spot_direction);
+        if(spot_factor >= cos(radians(light.spot_cutoff_angle)) )
+            spot_factor = pow(spot_factor,light.spot_exponent);//light angle also cause exponent
+        else
+            spot_factor = c_zero;
+        attr_factor *= spot_factor;
+    }
+    if(attr_factor > c_zero){
+        computed_color += (light.ambient_color * material.ambient_color); //ambient color
+        ndotl = max(c_zero,dot(normal,light_dir));
+        computed_color +=(ndotl * light.diffuse_color*material.diffuse_color);//diffuse color
+        half_plane = normalize(light_dir+vec3(c_zero,c_zero,c_one));
+        ndoth = dot(normal,half_plane);
+        if(ndoth > c_zero){
+            computed_color += (pow(ndoth,material.specular_exponent)*material.specular_color*light.specular_color);//specular color
+        }
+        computed_color *= attr_factor;
+    }
+
+    return computed_color;
+}
+
+void main() {
+    v_normal =  (mvpMatrix*vec4(normalize(a_normal),c_one)).xyz;
+    gl_Position = mvpMatrix*vPosition;
+    t_color = spot_light_color(v_normal,gl_Position);
+}
